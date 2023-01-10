@@ -1,101 +1,152 @@
+from sklearn.datasets import load_boston
+import warnings
+import pandas as pd
+import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
-# import statistics
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import statsmodels.api as sm
+from sklearn.metrics import mean_squared_error, mean_absolute_error, rand_score
+from sklearn.cluster import KMeans
+import scipy.cluster.hierarchy as sch
 
-#Задание №1
-f = open('viborka.txt')
-vib = f.read().split(' ')
-f.close()
 
-viborka = []
-try:
-	for i in vib:
-		viborka.append(int(i))
-	if len(viborka) != 20:
-		print('Объём выборки не равен 20.')
+
+warnings.filterwarnings("ignore")
+boston = load_boston()
+df = pd.DataFrame(boston.data)
+df.columns = [boston.feature_names]
+
+df['PRICE'] = boston.target
+df.isnull()
+
+# print(df.describe())
+print(df)
+print(df.corr())
+
+mask = np.zeros_like(df.corr())
+plt.figure(figsize=(16,10))
+sns.heatmap(df.corr(), mask=mask, annot=True, annot_kws={'size': 14})
+sns.set_style('white')
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.show()
+
+
+
+
+prices = np.log(df['PRICE'])
+features = df.drop('PRICE', axis=1)
+
+X_train, X_test, Y_train, Y_test = train_test_split(features, prices, test_size = 0.2, random_state=10)
+
+
+regr = LinearRegression()
+regr.fit(X_train, Y_train)
+
+print('Коэффициент детерминации(тренировочные данные): ', regr.score(X_train, Y_train))
+print('Коэффициент детерминации(тестовые данные): ', regr.score(X_test, Y_test))
+print('Интерцепт: ', regr.intercept_[0])
+
+
+X_incl_const = sm.add_constant(X_train)
+model = sm.OLS(Y_train, X_incl_const)
+results = model.fit()
+
+reduced_log_mse = round(results.mse_resid, 3)
+
+print('2 СКО в log:', 2 * np.sqrt(reduced_log_mse))
+
+upper_price = np.log(30) + 2 * np.sqrt(reduced_log_mse)
+print('Максимальная цена: $', np.e ** upper_price * 1000)
+
+lower_price = np.log(30) - 2 * np.sqrt(reduced_log_mse)
+print('Минимальная цена: $', np.e ** lower_price * 1000)
+
+
+pred = regr.predict(X_test)
+print('mean_squared_error : ', mean_squared_error(Y_test, pred))
+print('mean_absolute_error : ', mean_absolute_error(Y_test, pred))
+
+
+
+my_dict = {'PRICE': df['PRICE'], 'RM': df['RM']}
+X = pd.DataFrame([my_dict])
+
+X = np.array(X, dtype=float)
+
+wcss = []
+for i in range(1, 11):
+	kmeans = KMeans(n_clusters = i, init = 'k-means++', random_state = 42)
+	kmeans.fit(X)
+	wcss.append(kmeans.inertia_)
+plt.plot(range(1, 11), wcss)
+plt.title('The Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+
+kmeans = KMeans(n_clusters = 2, init = 'k-means++', random_state = 42)
+y_kmeans = kmeans.fit_predict(X)
+
+df2 = df
+y_kmeans_list = list(y_kmeans)
+
+for i in range(len(y_kmeans_list)):
+	y_kmeans_list[i] += 1
+
+tmp = list(df.iloc[:, 6].values)
+k = 0
+clusters = []
+
+for i in range(len(tmp)):
+	clusters.append(y_kmeans_list[k])
+	k += 1
+
+true_clusters = []
+pricesT = list(df2['PRICE'])
+
+for i in range(len(pricesT)):
+	if float(pricesT[i]) < 21.6:
+		true_clusters.append(2)
 	else:
-		print(f'Выборка:  {viborka}')
+		true_clusters.append(1)
 
-		#Варианты
-		variants = []
-		z = 0
-		while z != max(viborka):
-			z += 1
-			variants.append(z)
-		print(f'Варианты: {variants}')
-
-		#Частоты N
-		frequencies = []
-		z = 0
-		while z != max(viborka):
-			z += 1
-			frequencies.append(viborka.count(z))
-		print(f'Частоты:  {frequencies}')
-		
-
-		#Выборочное среднее или Математематическое ожидание
-		sample_average = sum(viborka) / len(viborka)
-		print(f'Выборочное среднее: {sample_average}')
-
-		#Мода
-		max_frequencies = max(frequencies)
-		index = frequencies.index(max_frequencies)
-		moda = variants[index]
-		print(f'Мода: {moda}')
-
-		#Медиана и упорядоченная выборка
-		sort_viborka = viborka
-		sort_viborka.sort()
-		print(f'Упорядоченная выборка: {sort_viborka}')
-		median = (sort_viborka[9] + sort_viborka[10]) / 2
-		print(f'Медиана: {median}')
-
-		#Выбороная дисперсия
-		sample_variance = 0
-		h = 0
-		while h != len(frequencies):
-			sample_variance += frequencies[h] * (variants[h] - sample_average)**2
-			h += 1
-		sample_variance = round(sample_variance / (len(viborka) - 1), 4)
-		# sample_variance = statistics.variance(viborka)
-		print(f'Выборочная дисперсия: {sample_variance}')
-
-
-		#Стандартное отклонение
-		standard_deviation = round(sample_variance**0.5, 4)
-		print(f'Стандартное отклонение: {standard_deviation}')
-
-
-		#Коэффициент вариации
-		coefficient_of_variation = round(standard_deviation / sample_average * 100, 4)
-		print(f'Коэффициент вариации: {coefficient_of_variation}')
-
-
-		#Размах
-		scope = max(viborka) - min(viborka)
-		print(f'Размах: {scope}')
+df2['Cluster'] = clusters
+df2['True cluster'] = true_clusters
+# df2.to_excel('cluster.xlsx')
+df2.head()
 
 
 
 
-#Задание №2
-	e = round(sample_average - standard_deviation, 2)
-	f = 3.5
-	g = round(sample_average + standard_deviation, 2)
+plt.scatter(X[y_kmeans == 0, 0], X[y_kmeans == 0, 1], s = 100, c = 'blue', label = 'Cluster 1')
+plt.scatter(X[y_kmeans == 1, 0], X[y_kmeans == 1, 1], s = 100, c = 'red', label = 'Cluster 2')
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s = 300, c = 'black', label = 'Centroids')
 
-	if e < f < g:
-		print(f'\n\n\n{e} < {f} < {g}\nОтвет: Да')
-	else:
-		print(f'\n\n\n{e} < {f} < {g}\nОтвет: Нет')
+plt.title('Clusters')
+plt.xlabel('Price')
+plt.ylabel('RM')
+plt.legend()
 
-	#Графики
-	plt.subplot(1, 2, 1)
-	plt.title('Полигон')
-	plt.plot(variants, frequencies, color='red')
-	plt.subplot(1, 2, 2)
-	plt.title('Гистограмма')
-	plt.bar(variants, frequencies, color='red')
-	plt.show()
-		
+plt.show()
 
-except Exception:
-	print('Вы ввели неверные значения!')
+X_old = df.iloc[:, [6, 6]].values
+for i in range(len(X_old)):
+	if X_old[i][1] < 7.185:
+		X_old[i] = 0
+X = []
+for i in range(len(X_old)):
+	if sum(X_old[i]) == 0:
+		pass
+	elif sum(X_old[i]) > 0:
+		X.append([X_old[i][0], X_old[i][1]])
+X = np.array(X, dtype=float)
+dendrogram = sch.dendrogram(sch.linkage(X, method = 'ward'))
+plt.title('Dendrogram')
+plt.xlabel('RM')
+plt.ylabel('Euclidean distances')
+plt.show()
