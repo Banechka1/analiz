@@ -31,6 +31,7 @@ ptd11 = pd.read_csv('part_11.csv')
 ptd12 = pd.read_csv('part_12.csv')
 
 print(ptd12.head())
+
 ![12345](https://user-images.githubusercontent.com/108561676/214591430-39657baf-f576-4c6d-88df-31b87610971f.jpg)
 
 
@@ -64,6 +65,7 @@ final_dataset = final_dataset.merge(btm5, left_on='ID', right_on='ID')
 final_dataset = final_dataset.merge(btm6, left_on='ID', right_on='ID')
 
 final_dataset = final_dataset.sort_values(by='ID')
+
 ![123445](https://user-images.githubusercontent.com/108561676/214591614-4fe0e71f-04c8-4ca7-93b9-3ab9ca5f88a4.jpg)
 
 
@@ -79,6 +81,7 @@ final_dataset = final_dataset.drop_duplicates(keep=False)
 print('Первые 10 строк объединенного датасета')
 
 print(final_dataset.head(10))
+
 ![123436445](https://user-images.githubusercontent.com/108561676/214592078-e412b897-294d-4fda-8465-415a4731bfa1.jpg)
 
 
@@ -87,6 +90,7 @@ print(final_dataset.head(10))
 print('Количество столбцов и колонок в объединенном датасете')
 
 print(final_dataset.shape)
+
 ![12343445](https://user-images.githubusercontent.com/108561676/214592231-8960ac3e-7c1a-491f-b6f9-ea6c5eb9f4f3.jpg)
 
 
@@ -95,6 +99,7 @@ print(final_dataset.shape)
 print('Находим в получившемся датасете все поля, которые являются текстовыми')
 
 print(final_dataset.info(verbose=True))
+
 ![1244343445](https://user-images.githubusercontent.com/108561676/214592519-371553f6-99df-4ae0-b924-6ca44e694b8f.jpg)
 
 
@@ -116,6 +121,7 @@ for column in columns_dtype_object:
 	final_dataset[column] = final_dataset[column].str.lower()
 	
 	print(final_dataset[column].head(10))
+	
 ![image](https://user-images.githubusercontent.com/108561676/214592696-65d16adf-305f-4b38-98a7-eae9de721cbe.png)
 
 
@@ -163,9 +169,11 @@ print(len(final_dataset['CLNT_JOB_POSITION'].unique()))
 ![124434344445](https://user-images.githubusercontent.com/108561676/214593052-eee49202-88cc-4880-b51b-e0360286fe56.jpg)
 
 
+
 #Выведите колонки итогового датасета
 
 print('Колонки итогового датасета: ')
 
 print(final_dataset.columns)
+
 ![1244442134344445](https://user-images.githubusercontent.com/108561676/214593131-bb702868-8508-4242-8caf-80f5ae44b0a9.jpg)
